@@ -1,0 +1,1 @@
+Kör pip3 install -r requirements.txt för att installera alla requirements
