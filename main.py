@@ -1,5 +1,6 @@
-from googleapiclient.discovery import build
+
 from google.oauth2 import service_account
+from CachedGroupAPI import CachedGroupAPI
 
 # TODO(developer): Set key_path to the path to the service account key
 #                  file.
@@ -14,6 +15,11 @@ credentials = service_account.Credentials.from_service_account_file(
 )
 credentials=credentials.with_subject('morriser@fysiksektionen.se')
 
-service = build('admin', 'directory_v1', credentials=credentials)
+api = CachedGroupAPI(credentials)
 
-print(service.groups().list(customer="my_customer", domain="fysiksektionen.se").execute())
+print(api.listGroups("fysiksektionen.se"))
+
+for group in api.listGroups("fysiksektionen.se"):
+    print(group.keys())
+
+print(api.listMembers(api.listGroups("fysiksektionen.se")[0]['id']))
