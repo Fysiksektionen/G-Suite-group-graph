@@ -20,6 +20,6 @@ api = CachedGroupAPI(credentials)
 print(api.listGroups("fysiksektionen.se"))
 
 for group in api.listGroups("fysiksektionen.se"):
-    print(group.keys())
+    print(group)
 
-print(api.listMembers(api.listGroups("fysiksektionen.se")[0]['id']))
+print(api.getSubGroups(api.listGroups("fysiksektionen.se")[0]['id']))
