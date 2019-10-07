@@ -7,10 +7,11 @@ class CachedGroupAPI:
     def __init__(self, credentials):
         self.service = build('admin', 'directory_v1', credentials=credentials)
         self.groupsTable = dict()
+        self.groups = dict()
         self.membersTable = dict()
 
 
-    def listGroups(self, domain, customer=None):
+    async def listGroups(self, domain, customer=None):
         key = domain
         if customer != None:
             domain = None
@@ -20,7 +21,7 @@ class CachedGroupAPI:
             return self.groupsTable[key]
 
         req = self.service.groups().list(customer=customer, domain=domain)
-        res, err = handle(req.execute)
+        res, err = await handle(req.execute)
         if err:
             print(err)
             return []
@@ -31,20 +32,34 @@ class CachedGroupAPI:
             groups.extend(res['groups'])
         
         self.groupsTable[key] = groups
+        self.groups.update([(x['id'], x) for x in groups])
         return groups
 
+
+    async def getGroup(self, groupKey):
+        if groupKey in self.groups:
+            return self.groups[groupKey]
+        req = self.service.groups().get(groupKey=groupKey)
+        res, err = await handle(req.execute)
+        if err:
+            print(err)
+            return None
+        self.groups[res['id]']] = res
+
         
-    def listMembers(self, groupKey):
-        if groupKey in self.groupsTable:
-            return self.groupsTable[groupKey]
+    async def listMembers(self, groupKey):
+        if groupKey in self.membersTable:
+            return self.membersTable[groupKey]
 
         req = self.service.members().list(groupKey=groupKey)
-        res, err = handle(req.execute)
+        res, err = await handle(req.execute)
         if err:
             print(err)
             return []
+        if "members" not in res:
+            return []
         members = res['members']
-        while "nextPageToken" in res:
+        while "nextPageToken" in res and res["nextPageToken"]:
             req = self.service.members().list_next(req, res)
             res = req.execute()
             members.extend(res['members'])
@@ -53,14 +68,19 @@ class CachedGroupAPI:
         return members
 
     
-    def getSubGroups(self, groupKey):
-        return [group for group in self.listMembers(groupKey) if group['type'] == 'GROUP']
-
-    def getUsers(self, groupKey):
-        return [group for group in self.listMembers(groupKey) if group['type'] == 'USER']
+    async def preLoad(self, start_groups_keys):
+        for key in start_groups_keys:
+            self.listMembers(key) # Does not work like intended (javascript inspired)
 
 
-def handle(callback, *args, **kwargs):
+    async def getSubGroups(self, groupKey):
+        return [group for group in await self.listMembers(groupKey) if group['type'] == 'GROUP']
+
+    async def getUsers(self, groupKey):
+        return [group for group in await self.listMembers(groupKey) if group['type'] == 'USER']
+
+
+async def handle(callback, *args, **kwargs):
     try:
         res = [callback(*args, **kwargs), None]
     except HttpError as err:
