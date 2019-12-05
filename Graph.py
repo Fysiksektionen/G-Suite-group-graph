@@ -1,10 +1,11 @@
 
 
 class Graph:
-    def __init__(self, directed=True):
+    def __init__(self, directed=True, **kwattrs):
         self.directed = directed
         self.nodes = {}
         self.edges = set()
+        self.attrs = kwattrs
 
     def addNode(self, nodeID, value, **kwattrs):
         node = Node(nodeID, value, **kwattrs)
@@ -22,6 +23,7 @@ class Graph:
         return edge
 
     def __str__(self):
+        attr_str = "\n\t".join([f"{key} = {self.attrs[key]}" for key in self.attrs])
         nodes_str = "\n\t".join([str(node) for node in self.nodes.values()])
         edges_str = "\n\t".join([str(edge) for edge in self.edges])
         dot = f"digraph G {{\n\t{nodes_str}\n\t{edges_str}\n}}"
@@ -35,8 +37,8 @@ class Node:
         self.attrs = kwattrs
 
     def __str__(self):
-        attr_str = " ".join([f"{key} = {self.attrs[key]}" for key in self.attrs])
-        dot = f"{self.nodeID} [ {attr_str} ];"
+        attr_str = " ".join([f'{key} = "{self.attrs[key]}"' for key in self.attrs])
+        dot = f'"{self.nodeID}" [ {attr_str} ];'
         return dot
 
 
@@ -56,5 +58,5 @@ class Edge:
 
     def __str__(self):
         attr_str = " ".join([f"{key} = {self.attrs[key]}" for key in self.attrs])
-        dot = f"{self.node1ID} -> {self.node2ID} [ {attr_str} ];"
+        dot = f'"{self.node1ID}" -> "{self.node2ID}" [ {attr_str} ];'
         return dot

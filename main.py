@@ -36,7 +36,7 @@ async def buildGraph():
     while not_seen:
         group_key = not_seen.pop()
         group = await api.getGroup(group_key)
-        graph.addNode(group_key, group)
+        graph.addNode(group_key, group, label=group['name'])
 
         print(group['name'])
 
